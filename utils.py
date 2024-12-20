@@ -7,6 +7,14 @@ import numpy as np
 from scipy.optimize import curve_fit
 import statsmodels.api as sm
 
+def load_sdg_mapping(file_path):
+    """
+    Load SDG mapping from column names to indicator names and vice versa.
+    """
+    sdg_description = pd.read_csv(file_path, encoding="latin1", delimiter=",", skip_blank_lines=True, on_bad_lines="skip")
+    column_to_name = dict(zip(sdg_description['IndCode'], sdg_description['Indicator']))
+    name_to_column = dict(zip(sdg_description['Indicator'], sdg_description['IndCode']))
+    return column_to_name, name_to_column, sdg_description
 
 @st.cache_data
 def load_file(uploaded_file):
@@ -27,7 +35,7 @@ def calculate_correlation_matrix(df, sdg_columns):
     return numeric_df.corr()
 
 # Function to display heatmap
-def display_heatmap(correlation_matrix):
+def display_heatmap(correlation_matrix, tooltips=None):
     fig, ax = plt.subplots(figsize=(12, 8))
     sns.heatmap(
         correlation_matrix,
@@ -35,8 +43,14 @@ def display_heatmap(correlation_matrix):
         cmap="coolwarm",
         fmt=".2f",
         linewidths=0.5,
-        ax=ax
+        ax=ax,
+        xticklabels = [tooltips.get(col, col) for col in
+                   correlation_matrix.columns] if tooltips else correlation_matrix.columns,
+        yticklabels = [tooltips.get(row, row) for row in
+                   correlation_matrix.index] if tooltips else correlation_matrix.index,
     )
+    plt.xticks(rotation=45, ha="right")
+    plt.yticks(rotation=0)
     st.pyplot(fig)
 
 # Function to display line graph for SDG indicators over time
