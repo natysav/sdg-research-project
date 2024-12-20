@@ -1,19 +1,20 @@
 import streamlit as st
 import utils as u
+import pandas as pd
 
 st.title("About Sustainable Development Goals (SDGs)")
 
-st.sidebar.header("SDG Data Upload")
-# Check if 'uploaded_file' exists in session_state
-if 'uploaded_file' not in st.session_state:
-    st.session_state['uploaded_file'] = None
+st.sidebar.header("SDG Data Management")
 
 # File uploader
 uploaded_file = st.sidebar.file_uploader("Upload your SDG Data CSV file", type=["csv"])
-
-if uploaded_file is not None:
-    st.session_state['uploaded_file'] = uploaded_file  # Save uploaded file to session_state
+if uploaded_file:
+    st.session_state["data"] = u.load_file(uploaded_file)
     st.sidebar.success("File uploaded successfully! You can now navigate to other pages.")
+else:
+    # Load a preloaded file if none is uploaded
+    if "data" not in st.session_state:
+        st.session_state["data"] = pd.read_csv("sdg_all.csv", encoding="latin1", delimiter=",", skip_blank_lines=True, on_bad_lines="skip")
 
 st.markdown("""
 ### What are the SDGs?
