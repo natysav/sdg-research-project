@@ -11,7 +11,7 @@ def load_sdg_mapping(file_path):
     """
     Load SDG mapping from column names to indicator names and vice versa.
     """
-    sdg_description = pd.read_csv(file_path, encoding="latin1", delimiter=",", skip_blank_lines=True, on_bad_lines="skip")
+    sdg_description = pd.read_csv("sdg_index_description.csv", encoding="latin1", delimiter=",", skip_blank_lines=True, on_bad_lines="skip")
     column_to_name = dict(zip(sdg_description['IndCode'], sdg_description['Indicator']))
     name_to_column = dict(zip(sdg_description['Indicator'], sdg_description['IndCode']))
     return column_to_name, name_to_column, sdg_description
