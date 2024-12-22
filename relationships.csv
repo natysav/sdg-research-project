@@ -1,0 +1,5 @@
+sdg_indicator_1,sdg_indicator_2,trend,created_timestamp
+sdg1_wpc,sdg1_lmicpov,linear,2024-12-22 06:59:26.754196
+sdg1_wpc,sdg1_lmicpov,polynomial,2024-12-22 06:59:36.640481
+sdg1_wpc,sdg1_lmicpov,polynomial,2024-12-22 07:01:32.460335
+sdg1_wpc,sdg1_oecdpov,logarithmic,2024-12-22 07:02:18.266079

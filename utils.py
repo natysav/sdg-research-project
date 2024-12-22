@@ -6,6 +6,7 @@ import streamlit as st
 import numpy as np
 from scipy.optimize import curve_fit
 import statsmodels.api as sm
+from datetime import datetime
 
 def load_sdg_mapping(file_path):
     """
@@ -245,3 +246,35 @@ def display_relationship_chart(df, x_column, y_column, trendline_type):
     )
     # Remove the index and adjust the height
     st.dataframe(least_squares_df.reset_index(drop=True), height=200)  # Adjust height as needed
+def save_relationship_record(sdg_indicator_1, sdg_indicator_2, trend, file_path='relationships.csv'):
+    """
+    Saves a new record of relationships between two variables with the selected trend to a CSV file.
+
+    Parameters:
+    - sdg_indicator_1 (str): The first SDG indicator.
+    - sdg_indicator_2 (str): The second SDG indicator.
+    - trend (str): The trend selected ('linear', 'polynomial', 'logarithmic', 'exponential', or 'none').
+    - file_path (str): Path to the CSV file. Default is 'relationships.csv'.
+
+    Returns:
+    None
+    """
+    # Create a DataFrame for the new record
+    new_record = pd.DataFrame({
+        'sdg_indicator_1': [sdg_indicator_1],
+        'sdg_indicator_2': [sdg_indicator_2],
+        'trend': [trend],
+        'created_timestamp': [datetime.now()]
+    })
+
+    try:
+        # Try to load the existing CSV file
+        relationships_df = pd.read_csv(file_path)
+        # Append the new record
+        relationships_df = pd.concat([relationships_df, new_record], ignore_index=True)
+    except FileNotFoundError:
+        # If the file does not exist, create a new DataFrame
+        relationships_df = new_record
+
+    # Save the updated DataFrame to the file
+    relationships_df.to_csv(file_path, index=False)

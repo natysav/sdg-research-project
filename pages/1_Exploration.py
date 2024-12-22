@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import utils as u
+from datetime import datetime
 
 st.title("SDG Indicators - Data Exploration")
 # Load SDG descriptions
@@ -66,6 +67,15 @@ if "data" in st.session_state:
         trendline_type = st.selectbox("Select Trendline Type", ["linear", "polynomial", "logarithmic", "exponential"])
         if x_column and y_column:
             u.display_relationship_chart(df, x_column, y_column, trendline_type)
+
+            # Assuming you have variables sdg_indicator_1 and sdg_indicator_2 defined
+            trend_options = ['linear', 'polynomial', 'logarithmic', 'exponential', 'none']
+            selected_trend = st.selectbox('Select the most suitable trend:', trend_options)
+            # Save the record on button click
+            if st.button('Save Trend Selection'):
+                u.save_relationship_record(x_column, y_column, selected_trend, file_path='relationships.csv')
+                st.success('Trend selection saved successfully.')
+
     else:
         st.warning("Please select at least one SDG column to explore.")
 else:
