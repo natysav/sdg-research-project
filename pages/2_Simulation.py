@@ -24,8 +24,8 @@ if "data" in st.session_state:
 
     # Variable and Dependent Columns
     st.subheader("Select Variables and Dependents")
-    variable_names = st.multiselect("Select Variable Indicators (Independent Variables)", sdg_names)
-    dependent_names = st.multiselect("Select Dependent Indicators", sdg_names)
+    variable_names = st.multiselect("Select Variable Indicators (Influencers)", sdg_names)
+    dependent_names = st.multiselect("Select Dependent Indicators (Effects)", sdg_names)
 
     if not variable_names or not dependent_names:
         st.warning("Please select at least one variable indicator and one dependent indicator.")
@@ -74,4 +74,4 @@ if "data" in st.session_state:
     st.table(simulated_df)
 
 else:
-    st.info("Please upload a file from the sidebar to get started.")
+    st.info("Please read About the project and let's get started.")

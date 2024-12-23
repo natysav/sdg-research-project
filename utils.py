@@ -5,6 +5,10 @@ import plotly.express as px
 import streamlit as st
 import numpy as np
 from scipy.optimize import curve_fit
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.metrics import mean_squared_error
+
 import statsmodels.api as sm
 from datetime import datetime
 
@@ -278,3 +282,164 @@ def save_relationship_record(sdg_indicator_1, sdg_indicator_2, trend, file_path=
 
     # Save the updated DataFrame to the file
     relationships_df.to_csv(file_path, index=False)
+
+
+def show_relationships_table():
+    # Load SDG indicators
+    sdg_index_df = pd.read_csv('sdg_index_description.csv', encoding="latin1", delimiter=",", skip_blank_lines=True, on_bad_lines="skip")
+    indicators = sdg_index_df['IndCode'].tolist()
+
+    # Create all ordered pairs of SDG indicators (A-B is different from B-A)
+    pairs = []
+    for i, ind1 in enumerate(indicators):
+        for ind2 in indicators:
+            if ind1 != ind2:  # Avoid self-pairs (A-A)
+                pairs.append((ind1, ind2))
+
+    # Load relationships.csv
+    try:
+        relationships_df = pd.read_csv('relationships.csv')
+        relationships_df['created_timestamp'] = pd.to_datetime(relationships_df['created_timestamp'])
+    except FileNotFoundError:
+        relationships_df = pd.DataFrame(columns=['sdg_indicator_1', 'sdg_indicator_2', 'trend', 'created_timestamp'])
+
+    # Prepare the table
+    relationships_table = []
+    for ind1, ind2 in pairs:
+        # Filter the records for the pair
+        pair_records = relationships_df[
+            ((relationships_df['sdg_indicator_1'] == ind1) & (relationships_df['sdg_indicator_2'] == ind2)) |
+            ((relationships_df['sdg_indicator_1'] == ind2) & (relationships_df['sdg_indicator_2'] == ind1))
+            ]
+
+        # Use the latest trend if records exist, otherwise default to 'linear'
+        if not pair_records.empty:
+            latest_record = pair_records.sort_values(by='created_timestamp', ascending=False).iloc[0]
+            trend = latest_record['trend']
+        else:
+            trend = 'linear'
+
+        # Append to the table
+        relationships_table.append({'sdg_indicator_1': ind1, 'sdg_indicator_2': ind2, 'trend': trend})
+
+    # Convert to DataFrame for display
+    relationships_table_df = pd.DataFrame(relationships_table)
+    return relationships_table_df
+
+
+def train_model(independent, dependent, trend, data):
+    """
+    Train a model based on the specified trend for the given pair of variables.
+
+    Parameters:
+    - independent (str): The independent variable column name.
+    - dependent (str): The dependent variable column name.
+    - trend (str): The trend type ('linear', 'polynomial', 'logarithmic', 'exponential', 'none').
+    - data (pd.DataFrame): Dataset with two columns (independent and dependent).
+
+    Returns:
+    - model: Trained model or None if trend is 'none'.
+    - predictions: Predicted values (if applicable).
+    - mse: Mean Squared Error or None if trend is 'none'.
+    """
+    from sklearn.linear_model import LinearRegression
+    from sklearn.preprocessing import PolynomialFeatures
+    from sklearn.metrics import mean_squared_error
+    import numpy as np
+
+    # Extract independent (X) and dependent (y) data
+    X = data[[independent]].values
+    y = data[dependent].values
+
+    if trend == 'none':
+        return None, None, None
+
+    if trend == 'linear':
+        model = LinearRegression()
+        model.fit(X, y)
+        predictions = model.predict(X)
+    elif trend == 'polynomial':
+        degree = 2  # Adjust as needed
+        poly = PolynomialFeatures(degree=degree)
+        X_poly = poly.fit_transform(X)
+        model = LinearRegression()
+        model.fit(X_poly, y)
+        predictions = model.predict(X_poly)
+    elif trend == 'logarithmic':
+        X_log = np.log(X)
+        model = LinearRegression()
+        model.fit(X_log, y)
+        predictions = model.predict(X_log)
+    elif trend == 'exponential':
+        y_log = np.log(y)
+        model = LinearRegression()
+        model.fit(X, y_log)
+        predictions = np.exp(model.predict(X))  # Reverse the log transformation
+    else:
+        return None, None, None
+
+    mse = mean_squared_error(y, predictions)
+    return model, predictions, mse
+
+def simulate_sdg_values(simulation_data, relationships, variable_columns, dependent_columns, slider_values):
+    """
+    Simulates dependent values based on relationships and user-set slider values for independent variables.
+
+    Parameters:
+    - simulation_data (pd.DataFrame): Filtered dataset with selected independent and dependent variables.
+    - relationships (pd.DataFrame): Relationships table specifying trends between variables.
+    - variable_columns (list): Selected independent variable columns.
+    - dependent_columns (list): Selected dependent variable columns.
+    - slider_values (dict): User-selected values for independent variables.
+
+    Returns:
+    - simulated_values (dict): Dictionary of dependent variables and their simulated values.
+    """
+    simulated_values = {}
+
+    for dependent in dependent_columns:
+        # Filter relationships for the current dependent variable
+        dependent_relationships = relationships[
+            (relationships['sdg_indicator_2'] == dependent) &
+            (relationships['sdg_indicator_1'].isin(variable_columns))
+        ]
+
+        # Check if there are any relationships
+        if dependent_relationships.empty:
+            # No trends defined; keep the dependent variable unchanged
+            st.warning(f"No valid relationships for {dependent}. It will remain unchanged.")
+            simulated_values[dependent] = simulation_data[dependent].mean()
+            continue
+
+        # Initialize simulated value
+        simulated_value = 0
+        valid_relationship = False
+
+        # Use relationships to predict dependent variable
+        for _, relationship in dependent_relationships.iterrows():
+            independent = relationship['sdg_indicator_1']
+            trend = relationship['trend']
+
+            # Train a model for the specific trend
+            # Pass only the independent and dependent columns required for the specific pair
+            model, _, _ = train_model(
+                independent=independent,
+                dependent=dependent,
+                trend=trend,
+                data=simulation_data[[independent, dependent]]
+            )
+
+            if model and trend != 'none':
+                # Prepare the input for prediction using only the specific independent variable
+                input_value = np.array([[slider_values[independent]]])
+                simulated_value += model.predict(input_value)[0]
+                valid_relationship = True
+
+        if valid_relationship:
+            simulated_values[dependent] = simulated_value
+        else:
+            # No valid relationships, keep the dependent unchanged
+            simulated_values[dependent] = simulation_data[dependent].mean()
+
+    return simulated_values
+
