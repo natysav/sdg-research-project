@@ -241,7 +241,7 @@ def display_relationship_chart(df, x_column, y_column, trendline_type):
     st.plotly_chart(scatter_fig, use_container_width=True)
 
     # Display the least squares values
-    st.write("### Least Squares Values for Trendlines")
+    st.write("## Least Squares Values for Trendlines")
     least_squares_df = pd.DataFrame(
         {
             "Trendline Type": list(least_squares_values.keys()),

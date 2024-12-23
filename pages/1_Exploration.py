@@ -55,10 +55,14 @@ if "data" in st.session_state:
         st.subheader("Relationship Between Two SDG Indicators")
         col1, col2 = st.columns(2)
         with col1:
-            x_column = st.selectbox("Select X-axis SDG Indicator", sdg_columns)
+            x_name = st.selectbox("Select X-axis SDG Indicator", sdg_names)
+            #selected_sdg = st.multiselect("Select SDG Columns", sdg_names, default=sdg_names[:5])
+            x_column = sdg_name_to_column[x_name]
 
         with col2:
-            y_column = st.selectbox("Select Y-axis SDG Indicator", [col for col in sdg_columns if col != x_column])
+            y_name = st.selectbox("Select Y-axis SDG Indicator", [col for col in sdg_names if col != x_name])
+            y_column = sdg_name_to_column[y_name]
+
 
         trendline_type = st.selectbox("Select Trendline Type", ["linear", "polynomial", "logarithmic", "exponential"])
         if x_column and y_column:
@@ -66,7 +70,7 @@ if "data" in st.session_state:
 
             # Assuming you have variables sdg_indicator_1 and sdg_indicator_2 defined
             trend_options = ['linear', 'polynomial', 'logarithmic', 'exponential', 'none']
-            selected_trend = st.selectbox('Select the most suitable trend:', trend_options)
+            selected_trend = st.selectbox(' Select the most suitable trend:', trend_options)
             # Save the record on button click
             if st.button('Save Trend Selection'):
                 u.save_relationship_record(x_column, y_column, selected_trend, file_path='relationships.csv')
