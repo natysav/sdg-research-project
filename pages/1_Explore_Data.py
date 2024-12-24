@@ -3,7 +3,8 @@ import pandas as pd
 import utils as u
 from datetime import datetime
 
-st.title("SDG Indicators - Data Exploration")
+
+st.title("Explore SDG Data 📊")
 # Load SDG descriptions
 sdg_descriptions = u.load_sdg_mapping("sdg_index_description.csv")[2]
 # Load the mapping between SDG column names and indicator names
@@ -18,7 +19,7 @@ if "data" in st.session_state:
     sdg_names = [sdg_column_to_name[col] for col in sdg_columns if col in sdg_column_to_name]
 
     # Sidebar Filters
-    st.header("Filters")
+    st.subheader("User Filters")
     col01, col02 = st.columns(2)
     with col01:
     # Country Filter
@@ -36,21 +37,22 @@ if "data" in st.session_state:
                 df = df[df["indexreg"] == selected_indexreg]
 
     # SDG Column Selector
-    selected_sdg = st.multiselect("Select SDG Columns", sdg_names, default=sdg_names[:5])
+    selected_sdg = st.multiselect("Select SDG Indicators for further exploration", sdg_names, default=sdg_names[:5])
     selected_sdg_columns = [sdg_name_to_column[name] for name in selected_sdg if name in sdg_name_to_column]
 
     if selected_sdg:
+
+
+        st.subheader("SDG Indicators Over Time")
+        if "year" in df.columns:
+            u.display_line_graph(df, selected_sdg_columns, sdg_column_to_name)
+        else:
+            st.warning("Your dataset must include a 'year' column for line graphs.")
 
         st.subheader("Correlation Heatmap")
         correlation_matrix = u.calculate_correlation_matrix(df, selected_sdg_columns)
         sdg_name_mapping = {col: sdg_column_to_name[col] for col in selected_sdg_columns if col in sdg_column_to_name}
         u.display_heatmap(correlation_matrix)
-
-        st.subheader("SDG Indicators Over Time")
-        if "year" in df.columns:
-            u.display_line_graph(df, selected_sdg_columns)
-        else:
-            st.warning("Your dataset must include a 'year' column for line graphs.")
 
         st.subheader("Relationship Between Two SDG Indicators")
         col1, col2 = st.columns(2)
@@ -70,7 +72,7 @@ if "data" in st.session_state:
 
             # Assuming you have variables sdg_indicator_1 and sdg_indicator_2 defined
             trend_options = ['linear', 'polynomial', 'logarithmic', 'exponential', 'none']
-            selected_trend = st.selectbox(' Select the most suitable trend:', trend_options)
+            selected_trend = st.selectbox(' What is the best fitting line?', trend_options)
             # Save the record on button click
             if st.button('Save Trend Selection'):
                 u.save_relationship_record(x_column, y_column, selected_trend, file_path='relationships.csv')

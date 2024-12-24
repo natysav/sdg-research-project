@@ -4,12 +4,17 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 import utils as u
 
+import streamlit as st
+
+st.title("Run Simulation 🛠️")
+st.write("""
+This tool uses modeling and trend analysis to provide insights.
+""")
+
 # Load the mapping between SDG column names and indicator names
 sdg_column_to_name = u.load_sdg_mapping("sdg_index_description.csv")[0]
 sdg_name_to_column = u.load_sdg_mapping("sdg_index_description.csv")[1]
 
-# Title and File Upload
-st.title("SDG Indicators - Simulation")
 
 if "data" in st.session_state:
     df = st.session_state["data"]
@@ -24,7 +29,9 @@ if "data" in st.session_state:
 
     # Variable and Dependent Columns
     st.subheader("Select Variables and Dependents")
+
     variable_names = st.multiselect("Select Variable Indicators (Influencers)", sdg_names)
+
     dependent_names = st.multiselect("Select Dependent Indicators (Effects)", sdg_names)
 
     if not variable_names or not dependent_names:
@@ -50,6 +57,9 @@ if "data" in st.session_state:
 
     # Sliders for Variable Columns
     st.subheader("Set Values for Variable Indicators")
+    st.write("""
+    Adjust SDG indicators below to observe their potential impact on other metrics.
+    """)
     slider_values = {}
     for col, name in zip(variable_columns, variable_names):
         min_val = float(simulation_data[col].min())
@@ -58,7 +68,7 @@ if "data" in st.session_state:
         slider_values[col] = st.slider(f"Set value for {name}", min_val, max_val, default_val)
 
     # Simulate Dependent Values
-    st.subheader("Simulated Values for Dependent Indicators")
+    st.subheader("Simulation Results for Dependent Indicators")
     simulated_values = {}
     for dependent, model in models.items():
         input_data = np.array([slider_values[col] for col in variable_columns]).reshape(1, -1)

@@ -59,7 +59,7 @@ def display_heatmap(correlation_matrix, tooltips=None):
     st.pyplot(fig)
 
 # Function to display line graph for SDG indicators over time
-def display_line_graph(df, selected_sdg_columns):
+def display_line_graph(df, selected_sdg_columns, sdg_column_name_mapping):
     """
     Displays a line graph showing the average value of each SDG indicator by year.
 
@@ -81,6 +81,9 @@ def display_line_graph(df, selected_sdg_columns):
     # Melt the DataFrame for easier plotting with Plotly Express
     melted_df = grouped_df.melt(id_vars='year', value_vars=selected_sdg_columns, var_name='SDG Indicator',
                                 value_name='Average Value')
+    # Apply mapping to make the legend more descriptive
+    melted_df['SDG Indicator'] = melted_df['SDG Indicator'].map(sdg_column_name_mapping)
+
 
     # Plot the line graph
     fig = px.line(
@@ -88,7 +91,7 @@ def display_line_graph(df, selected_sdg_columns):
         x='year',
         y='Average Value',
         color='SDG Indicator',
-        title="Average SDG Indicators Over Time",
+        #title="SDG Indicators Over Time",
         labels={'Average Value': 'Average Value', 'year': 'Year'}
     )
     st.plotly_chart(fig)
@@ -241,7 +244,7 @@ def display_relationship_chart(df, x_column, y_column, trendline_type):
     st.plotly_chart(scatter_fig, use_container_width=True)
 
     # Display the least squares values
-    st.write("## Least Squares Values for Trendlines")
+    st.write("Least Squares Values for Trendlines")
     least_squares_df = pd.DataFrame(
         {
             "Trendline Type": list(least_squares_values.keys()),
